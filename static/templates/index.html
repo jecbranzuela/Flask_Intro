@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}
+Sample Title
+{% endblock %}
+
+{% block content %}
+
+<form method="GET" action="{{ url_for('search') }}">
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="query" placeholder="Search..." value="{{ query }}">
+    <div class="input-group-append">
+      <button class="btn btn-outline-success" type="submit">Search</button>
+    </div>
+  </div>
+</form>
+<table class="table table-hover table-dark" style="width: 100%;">
+  <thead>
+    <tr>
+      <!-- Your Columns HERE -->
+      <th scope="col">ID</th>
+      <th scope="col">Name</th>
+      <th scope="col">Date Purchased</th>
+      <th scope="col">Price</th>
+      <th scope="col">Options</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Your rows inside the table HERE: -->
+    {% for item in items %}
+    <tr>
+      <td>{{ item.id }}</td>
+      <td>{{ item.name }}</td>
+      <td>{{item.datePurchased}}</td>
+      <td>₱ {{ item.price }}</td>
+      <td>
+        <button class="btn btn-outline btn-info" onclick="editItem('{{ item.id }}')" data-toggle="modal"
+          data-target="#UpdateItem">Edit</button>
+        <button class="btn btn-outline btn-success">Purchase Item</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a class="btn btn-outline-primary ml-3 mb-3" id="fixed-button" data-toggle="modal" data-target="#RegisterItem">
+  Add
+</a>
+
+<!-- Register Modal -->
+<div class="modal fade" id="RegisterItem" data-backdrop="static" data-keyboard="false" tabindex="-1"
+  aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Register Item</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('RegisterItem') }}" class="form-register" style="color: grey;">
+          {{ form.hidden_tag() }}
+          <blockquote class="blockquote text-center">
+            <h1 class="h3 mb-3 font-weight-normal">
+              Register Item
+            </h1>
+          </blockquote>
+          {{form.name.label()}} {{ form.name(class="form-control", placeholder="Enter Name...",autocomplete="off")}}
+          {{form.price.label()}} {{ form.price(class="form-control", placeholder="Enter Price...",autocomplete="off")}}
+          {{form.type.label()}} {{ form.type(class="form-control", placeholder="Item Type...",autocomplete="off")}}
+          {{form.datePurchased.label()}} {{ form.datePurchased(class="form-control", placeholder="Enter Date...",autocomplete="off") }}
+          <br>
+          {{ form.submit(class="btn btn-lg btn-block btn-primary") }}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="UpdateItem" data-backdrop="static" data-keyboard="false" tabindex="-1"
+  aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Update Item</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" id="updateItemForm" class="form-register"
+          style="color: grey;">
+          {{ form.hidden_tag() }}
+          <input type="hidden" id="itemIdToUpdate" name="item_id"> <!-- Add this hidden input field -->
+          <blockquote class="blockquote text-center">
+            <h1 class="h3 mb-3 font-weight-normal">
+              Update Item
+            </h1>
+          </blockquote>
+          {{form.name.label()}} {{ form.name(class="form-control", placeholder="Enter Name...")}}
+          {{form.price.label()}} {{ form.price(class="form-control", placeholder="Enter Price...")}}
+          {{form.datePurchased.label()}} {{ form.datePurchased(class="form-control", placeholder="Enter Date...") }}
+          <br>
+          {{ form.submit(class="btn btn-lg btn-block btn-primary") }}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function editItem(itemId) {
+    // Set the value of the hidden input field to the item ID
+    document.getElementById('itemIdToUpdate').value = itemId;
+    // Open the update modal
+    $('#UpdateItem').modal('show');
+  }
+</script>
+{% endblock %}

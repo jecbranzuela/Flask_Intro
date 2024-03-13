@@ -7,3 +7,5 @@ if __name__ == "__main__":
     with app.app_context(): #create the database, if not already created
         db.create_all()
     app.run(host="0.0.0.0", port=8080, threaded=True, debug=True)
+
+    #hello

@@ -14,7 +14,7 @@ def index():
 @app.route('/search',methods=['GET', 'POST'])
 def search():
     query = request.args.get('query','')
-    results = Item.query.filter(Item.name.ilike(f"%{query}%")).all()
+    results = Item.query.filter(Item.name.ilike(f"%{query}%") | Item.id.ilike(f"%{query}%")).all()
     itemsFormatted = FormatItem(results)
     form = RegisterItemForm()
     return render_template('index.html', items=itemsFormatted, query=query,form=form)
@@ -32,31 +32,35 @@ def RegisterItem():
             #type = form.type.data,
             datePurchased=form.datePurchased.data
         )
-        db.session.add(item_to_create)
-        db.session.commit()
-        flash('Success! Item has been created!', category='success')
-        query = request.args.get('query','')
-        results = Item.query.filter(Item.name.ilike(f"%{query}%")).all()
-        itemsFormatted = FormatItem(results)
-        itemsFormatted = [itemsFormatted[-1]] + itemsFormatted[:-1]
-        return render_template('index.html', items=itemsFormatted, query=query,form=form)
+        similarItem = Item.query.filter(Item.name.like(f'%{item_to_create.name}')).all()
+        if similarItem:
+            flash(f'Item {item_to_create.name} is already in the database!',category='warning')
+        else:
+            db.session.add(item_to_create)
+            db.session.commit()
+            flash(f'Success! Item {item_to_create.name} has been created!', category='success')
+            query = request.args.get('query','')
+            results = Item.query.filter(Item.name.ilike(f"%{query}%")).all()
+            itemsFormatted = FormatItem(results)
+            itemsFormatted = [itemsFormatted[-1]] + itemsFormatted[:-1]
+            return render_template('index.html', items=itemsFormatted, query=query,form=form)
     
     FormError(form)
     return redirect(url_for('search'))
 
-@app.route('/UpdateItem/', methods=['GET', 'POST'])
-def UpdateItem():
-    item = request.form('item_id')
-    ItemToUpdate = Item.query.get(item)
+@app.route('/UpdateItem/<int:item_id>', methods=['GET', 'POST'])
+def UpdateItem(item_id):
+    ItemToUpdate = Item.query.get_or_404(item_id)
     form = RegisterItemForm(obj=ItemToUpdate)
     if form.validate_on_submit():
-        form.populate_obj(ItemToUpdate)
         ItemToUpdate.name = form.name.data
         ItemToUpdate.price = form.price.data
         ItemToUpdate.datePurchased = form.datePurchased.data
         flash(f'Success! The update has been committed to the database', category='success')
         db.session.commit()
-        return redirect(url_for('search'))
+    else:
+        FormError(form)
+    return redirect(url_for('search'))
 
 
 
@@ -77,7 +81,7 @@ def UpdateItem():
 def FormError(form):
     if form.errors != {}:
         for err_msg in form.errors.values():
-            flash(f'Error in creating a user: {err_msg}', category='danger')
+            flash(f'Error: {err_msg}', category='danger')
 def FormatItem(items):
     # Set the locale to use the user's default settings
     locale.setlocale(locale.LC_ALL,'')

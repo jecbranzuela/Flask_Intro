@@ -48,19 +48,18 @@ def RegisterItem():
     FormError(form)
     return redirect(url_for('search'))
 
-@app.route('/UpdateItem/<int:item_id>', methods=['GET', 'POST'])
+@app.route('/UpdateItem/<item_id>', methods=['GET', 'POST'])
 def UpdateItem(item_id):
-    ItemToUpdate = Item.query.get_or_404(item_id)
+    ItemToUpdate = Item.query.filter_by(id=item_id).first()
     form = RegisterItemForm(obj=ItemToUpdate)
     if form.validate_on_submit():
-        ItemToUpdate.name = form.name.data
-        ItemToUpdate.price = form.price.data
-        ItemToUpdate.datePurchased = form.datePurchased.data
-        flash(f'Success! The update has been committed to the database', category='success')
+        form.populate_obj(ItemToUpdate)
         db.session.commit()
+        flash(f'Success! The update has been committed to the database', category='success')
+        return redirect(url_for('index'))
     else:
         FormError(form)
-    return redirect(url_for('search'))
+    return render_template('UpdateItem.html',form=form)
 
 
 

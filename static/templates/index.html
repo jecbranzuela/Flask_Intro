@@ -33,8 +33,9 @@ Sample Title
       <td>{{item.datePurchased}}</td>
       <td>₱ {{ item.price }}</td>
       <td>
-        <button class="btn btn-outline btn-info" data-toggle="modal" data-target="#UpdateItem_{{item.id}}">Edit</button>
-        <button class="btn btn-outline btn-success">Purchase Item</button>
+        <button class="btn btn-outline-info" data-toggle="modal" data-target="#ItemInfo_{{item.id}}">More Info</button>
+        <a class="btn btn-outline-warning" href="{{url_for('UpdateItem',item_id=item.id)}}">Edit</a>
+        <button class="btn btn-outline-primary">Purchase Item</button>
       </td>
     </tr>
     {% endfor %}
@@ -82,40 +83,41 @@ Sample Title
   </div>
 </div>
 {% for item in items %}
-<!-- Update Modal -->
-<div class="modal fade" id="UpdateItem_{{item.id}}" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<!-- Info Modal -->
+<div class="modal fade" id="ItemInfo_{{item.id}}" data-backdrop="static" data-keyboard="false" tabindex="-1"
   aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="staticBackdropLabel">Update Item</h5>
+        <h5 class="modal-title" id="staticBackdropLabel">Register Item</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <form id="update_form_{{ item.id }}" method="POST" action="{{ url_for('UpdateItem',item_id=item.id) }}"
-          class="form-register" style="color: grey;">
-          {{ form.hidden_tag() }}
-          <input type="hidden" id="itemIdToUpdate" name="item_id" value="{{ item.id }}">
-          <!-- Add this hidden input field -->
-          <blockquote class="blockquote text-center">
-            <h1 class="h3 mb-3 font-weight-normal">
-              Update Item
-            </h1>
-          </blockquote>
-          {{ form.csrf_token }}
-          {{form.name.label()}} {{ form.name(class="form-control", placeholder="current: " ~ item.name,
-          value=item.name)}}
-          {{form.price.label()}} {{ form.price(class="form-control", placeholder=item.price, value=item.price)}}
-          {{form.datePurchased.label()}} {{ form.datePurchased(class="form-control",
-          placeholder=item.datePurchased,value=item.datePurchased) }}
-          <br>
-          <div class="modal-footer">
-            <a type="button" class="btn btn-secondary" data-dismiss="modal" onclick=RefreshPage()>Close</a>
-            <button type="submit" class="btn btn-primary" data-dismiss="modal" onclick="submitForm('update_form_{{ item.id }}')">Submit</button>
-          </div>
-        </form>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>{{item.id}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Name:</td>
+              <td>{{item.name}}</td>
+            </tr>
+            <tr>
+              <td>Price:</td>
+              <td>{{item.price}}</td>
+            </tr>
+            <tr>
+              <td>Date Purchased:</td>
+              <td>{{item.datePurchased}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick=refreshPage()>Close</button>
       </div>
     </div>
   </div>

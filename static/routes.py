@@ -1,44 +1,57 @@
 from static import app, db
 from flask import render_template, redirect, url_for, request,flash, get_flashed_messages
 #import the classes from entities.py
-from static.entities import Item, User
+from static.entities import *
 import locale
 from datetime import datetime
 from static.forms import *
+from flask_login import current_user, login_user,logout_user,login_required
 
 @app.route('/')
 @app.route('/main')
+@login_required
 def index():
     return redirect(url_for('search'))
 
 @app.route('/search',methods=['GET', 'POST'])
+@login_required
 def search():
     query = request.args.get('query','')
-    results = Item.query.filter(Item.name.ilike(f"%{query}%") | Item.id.ilike(f"%{query}%")).all()
+    category = request.args.get('category', 'All')
+    if category == 'Electronics':
+        results = Electronics.query.filter(Electronics.name.ilike(f"%{query}%") | Electronics.id.ilike(f"%{query}%")).all()
+    elif category == 'Clothing':
+        results = Clothing.query.filter(Clothing.name.ilike(f"%{query}%") | Clothing.id.ilike(f"%{query}%")).all()
+    elif category == 'Food':
+        results = Food.query.filter(Food.name.ilike(f"%{query}%") | Food.id.ilike(f"%{query}%")).all()
+    else:
+        results = Item.query.filter(Item.name.ilike(f"%{query}%") | Item.id.ilike(f"%{query}%")).all()
+
     itemsFormatted = FormatItem(results)
-    form = RegisterItemForm()
-    return render_template('index.html', items=itemsFormatted, query=query,form=form)
+    form = ElectronicsForm()
+    return render_template('index.html', items=itemsFormatted, query=query,form=form,category=category)
 
-@app.route('/register_item', methods=['GET', 'POST'])
-def RegisterItem():
-    form = RegisterItemForm()
-
+@app.route('/register_electronics', methods=['GET', 'POST'])
+def RegisterElectronics():
+    form = ElectronicsForm()
     #[(client.id, f'{client.id}, {Client.getClientFullName(client.id)}') for client in clients]
     #form.type.choices
+
     if form.validate_on_submit():
-        item_to_create = Item(
-            name=form.name.data,
-            price=form.price.data,
-            #type = form.type.data,
-            datePurchased=form.datePurchased.data
-        )
-        similarItem = Item.query.filter(Item.name.like(f'%{item_to_create.name}')).all()
-        if similarItem:
-            flash(f'Item {item_to_create.name} is already in the database!',category='warning')
+        name = form.name.data
+        price = form.price.data
+        description = form.description.data
+        manufacturer = form.manufacturer.data
+
+        elec_to_create = Electronics(name=name, price=price,description=description,manufacturer=manufacturer)
+
+        similarElectronics = Electronics.query.filter(Electronics.name.like(f'%{elec_to_create.name}')).all()
+        if similarElectronics:
+            flash(f'Item {elec_to_create.name} is already in the database!',category='warning')
         else:
-            db.session.add(item_to_create)
+            db.session.add(elec_to_create)
             db.session.commit()
-            flash(f'Success! Item {item_to_create.name} has been created!', category='success')
+            flash(f'Success! Item {elec_to_create.name} has been created!', category='success')
             query = request.args.get('query','')
             results = Item.query.filter(Item.name.ilike(f"%{query}%")).all()
             itemsFormatted = FormatItem(results)
@@ -51,7 +64,12 @@ def RegisterItem():
 @app.route('/UpdateItem/<item_id>', methods=['GET', 'POST'])
 def UpdateItem(item_id):
     ItemToUpdate = Item.query.filter_by(id=item_id).first()
-    form = RegisterItemForm(obj=ItemToUpdate)
+    if ItemToUpdate.type == "electronics":
+        form = ElectronicsForm(obj=ItemToUpdate)
+    elif ItemToUpdate.type == "clothing":
+        form = ClothingForm(obj=ItemToUpdate)
+    elif ItemToUpdate.type == "food":
+        form = FoodForm(obj=ItemToUpdate)
     if form.validate_on_submit():
         form.populate_obj(ItemToUpdate)
         db.session.commit()
@@ -59,12 +77,45 @@ def UpdateItem(item_id):
         return redirect(url_for('index'))
     else:
         FormError(form)
-    return render_template('UpdateItem.html',form=form)
+    return render_template('UpdateItem.html',form=form,type=ItemToUpdate.type)
 
+@app.route('/register_user', methods=['GET', 'POST'])
+def RegisterUser():
+    form = UserForm()
+    if form.validate_on_submit():
+        user_to_create = User(
+            name=form.name.data,
+            description = form.description.data,
+            passwordHash = form.password1.data,
+            birthDate = form.birthDate.data
+        )
+        db.session.add(user_to_create)
+        db.session.commit()
+        flash(f'Success! User has been created!', category='success')
+        return redirect(url_for('index'))
+    else:
+        FormError(form)
+    return render_template('RegisterUser.html',form=form)
 
+@app.route("/login", methods=['GET','POST'])
+def login_page():
+    form = LoginForm()
+    if form.validate_on_submit():
+        attempted_user = User.query.filter_by(name=form.name.data).first()
+        if attempted_user and attempted_user.checkPassword(attemptedPassword=form.password.data):
+            login_user(attempted_user) 
+            flash(f'Success. You are logged in as: {attempted_user.name}', category='success')
+            return redirect(url_for('index'))
+        else:
+            flash('name and password does not exist in the database!',category='danger')
+    return render_template('login.html',form=form)
 
-
-
+@app.route('/logout')
+@login_required
+def logout_page():
+    logout_user()
+    flash("You have been logged out!", category='info')
+    return redirect(url_for('index'))
 
 '''
     Format the price with commas every three digits.
@@ -84,10 +135,10 @@ def FormError(form):
 def FormatItem(items):
     # Set the locale to use the user's default settings
     locale.setlocale(locale.LC_ALL,'')
-    month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    # month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     for item in items:
         item.price = locale.format_string("%.2f", item.price, grouping=True)
-        month_number = item.datePurchased.month - 1  # Month numbers are zero-based in Python
-        month_name = month_names[month_number]
-        item.datePurchased = f"{month_name} {item.datePurchased.day}, {item.datePurchased.year}"
+        # month_number = item.datePurchased.month - 1  # Month numbers are zero-based in Python
+        # month_name = month_names[month_number]
+        # item.datePurchased = f"{month_name} {item.datePurchased.day}, {item.datePurchased.year}"
     return items

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}
-Sample Title
+Flask Introduction
 {% endblock %}
 
 {% block content %}
@@ -8,6 +8,12 @@ Sample Title
 <form method="GET" action="{{ url_for('search') }}">
   <div class="input-group mb-3">
     <input type="text" class="form-control" name="query" placeholder="Search..." value="{{ query }}">
+    <select class="form-control" name="category">
+      <option value="All" {% if category == 'All' %} selected {% endif %}>All</option>
+      <option value="Electronics" {% if category == 'Electronics' %} selected {% endif %}>Electronics</option>
+      <option value="Clothing" {% if category == 'Clothing' %} selected {% endif %}>Clothing</option>
+      <option value="Food" {% if category == 'Food' %} selected {% endif %} >Food</option>
+    </select>
     <div class="input-group-append">
       <button class="btn btn-outline-success" type="submit">Search</button>
     </div>
@@ -19,7 +25,7 @@ Sample Title
       <!-- Your Columns HERE -->
       <th scope="col">ID</th>
       <th scope="col">Name</th>
-      <th scope="col">Date Purchased</th>
+      <th scope="col">Description</th>
       <th scope="col">Price</th>
       <th scope="col">Options</th>
     </tr>
@@ -30,7 +36,7 @@ Sample Title
     <tr>
       <td>{{ item.id }}</td>
       <td>{{ item.name }}</td>
-      <td>{{item.datePurchased}}</td>
+      <td>{{item.description}}</td>
       <td>₱ {{ item.price }}</td>
       <td>
         <button class="btn btn-outline-info" data-toggle="modal" data-target="#ItemInfo_{{item.id}}">More Info</button>
@@ -42,12 +48,12 @@ Sample Title
   </tbody>
 </table>
 
-<a class="btn btn-outline-primary ml-3 mb-3" id="fixed-button" data-toggle="modal" data-target="#RegisterItem">
-  Add
+<a class="btn btn-outline-primary ml-3 mb-3" id="fixed-button" data-toggle="modal" data-target="#RegisterElectronics">
+  Add Electronics
 </a>
 
-<!-- Register Modal -->
-<div class="modal fade" id="RegisterItem" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<!-- Register Electronics Modal -->
+<div class="modal fade" id="RegisterElectronics" data-backdrop="static" data-keyboard="false" tabindex="-1"
   aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -58,25 +64,25 @@ Sample Title
         </button>
       </div>
       <div class="modal-body">
-        <form id="create_form" method="POST" action="{{ url_for('RegisterItem') }}" class="form-register"
+        <form id="create_form" method="POST" action="{{ url_for('RegisterElectronics') }}" class="form-register"
           style="color: grey;">
           {{ form.hidden_tag() }}
           <blockquote class="blockquote text-center">
             <h1 class="h3 mb-3 font-weight-normal">
-              Register Item
+              Register Electronics
             </h1>
           </blockquote>
           {{form.name.label()}} {{ form.name(class="form-control", placeholder="Enter Name...",autocomplete="off")}}
           {{form.price.label()}} {{ form.price(class="form-control", placeholder="Enter Price...",autocomplete="off")}}
-          {{form.type.label()}} {{ form.type(class="form-control", placeholder="Item Type...",autocomplete="off")}}
-          {{form.datePurchased.label()}} {{ form.datePurchased(class="form-control", placeholder="Enter
-          Date...",autocomplete="off") }}
+          {{form.manufacturer.label()}} {{ form.manufacturer(class="form-control", placeholder="Enter Manufacturer...",autocomplete="off") }}
+          {{form.description.label()}} {{ form.description(class="form-control", placeholder="Enter Description...",autocomplete="off") }}
+          
           <br>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick=refreshPage()>Close</button>
-        <button type="submit" class="btn btn-primary" data-dismiss="modal"
+        <button type="button" class="btn btn-secondary" data-dismiss="RegisterElectronicsModal" onclick=refreshPage()>Close</button>
+        <button type="submit" class="btn btn-primary" data-dismiss="RegisterElectronicsModal"
           onclick="submitForm('create_form')">Submit</button>
       </div>
     </div>
@@ -89,7 +95,7 @@ Sample Title
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="staticBackdropLabel">Register Item</h5>
+        <h5 class="modal-title" id="staticBackdropLabel">Item Info</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -112,9 +118,34 @@ Sample Title
               <td>{{item.price}}</td>
             </tr>
             <tr>
-              <td>Date Purchased:</td>
-              <td>{{item.datePurchased}}</td>
+              <td>Description:</td>
+              <td>{{item.description}}</td>
             </tr>
+            
+            {%if item.type == "clothing" %}
+            <tr>
+              <td>Brand:</td>
+              <td>{{item.brand}}</td>
+            </tr>
+            <tr>
+              <td>Size:</td>
+              <td>{{item.size}}</td>
+            </tr>
+            {%elif item.type == "food" %}
+            <tr>
+              <td>Brand:</td>
+              <td>{{item.brand}}</td>
+            </tr>
+            <tr>
+              <td>Halal Certified:</td>
+              <td>{{item.isHalalCertified}}</td>
+            </tr>
+            {%elif item.type == "electronics" %}
+            <tr>
+              <td>Manufacturer:</td>
+              <td>{{item.manufacturer}}</td>
+            </tr>
+            {%endif%}
           </tbody>
         </table>
         <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick=refreshPage()>Close</button>

@@ -30,7 +30,7 @@ Update Item
             {%if type == "electronics" %}
             <div class="form-group">
               <label for="manufacturer" class="text-white">Manufacturer</label> <!-- Add text-white class for label -->
-              {{ form.manufacturer(class="form-control bg-dark text-white", placeholder="Enter Manufacturer...", autocomplete="off") }} <!-- Add bg-dark and text-white classes for input -->
+              {{ form.manufacturer(class="form-control bg-dark text-white", autocomplete="off") }} <!-- Add bg-dark and text-white classes for input -->
             </div>
             {%elif type == "clothing" %}
             <div class="form-group">

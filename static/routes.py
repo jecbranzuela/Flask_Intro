@@ -116,7 +116,7 @@ def RegisterPurchase(item_id):
             item_id=form.itemToBuy.data, #bind itemToBuy.id to item_id in Purchase table
             user_id=form.buyer.data,
             datePurchased=form.datePurchased.data)
-        db.session.execute(association)
+        db.session.execute(association) #in associative entities, 'execute' instead of the usual 'add' 
         db.session.commit()
         flash('Success! Purchase has been created', category='success')
             

@@ -9,12 +9,12 @@ from flask_login import current_user, login_user,logout_user,login_required
 
 @app.route('/')
 @app.route('/main')
-@login_required
+#@login_required
 def index():
     return redirect(url_for('search'))
 
 @app.route('/search',methods=['GET', 'POST'])
-@login_required
+#@login_required
 def search():
     query = request.args.get('query','')
     category = request.args.get('category', 'All')
@@ -34,17 +34,12 @@ def search():
 @app.route('/register_electronics', methods=['GET', 'POST'])
 def RegisterElectronics():
     form = ElectronicsForm()
-    #[(client.id, f'{client.id}, {Client.getClientFullName(client.id)}') for client in clients]
-    #form.type.choices
-
     if form.validate_on_submit():
         name = form.name.data
         price = form.price.data
         description = form.description.data
         manufacturer = form.manufacturer.data
-
         elec_to_create = Electronics(name=name, price=price,description=description,manufacturer=manufacturer)
-
         similarElectronics = Electronics.query.filter(Electronics.name.like(f'%{elec_to_create.name}')).all()
         if similarElectronics:
             flash(f'Item {elec_to_create.name} is already in the database!',category='warning')
@@ -58,7 +53,7 @@ def RegisterElectronics():
             itemsFormatted = [itemsFormatted[-1]] + itemsFormatted[:-1]
             return render_template('index.html', items=itemsFormatted, query=query,form=form)
     
-    FormError(form)
+    CheckFormError(form)
     return redirect(url_for('search'))
 
 @app.route('/UpdateItem/<item_id>', methods=['GET', 'POST'])
@@ -76,7 +71,7 @@ def UpdateItem(item_id):
         flash(f'Success! The update has been committed to the database', category='success')
         return redirect(url_for('index'))
     else:
-        FormError(form)
+        CheckFormError(form)
     return render_template('UpdateItem.html',form=form,type=ItemToUpdate.type)
 
 @app.route('/register_user', methods=['GET', 'POST'])
@@ -94,8 +89,48 @@ def RegisterUser():
         flash(f'Success! User has been created!', category='success')
         return redirect(url_for('index'))
     else:
-        FormError(form)
+        CheckFormError(form)
     return render_template('RegisterUser.html',form=form)
+
+@app.route('/purchase/<int:item_id>', methods =['GET', 'POST'])
+def RegisterPurchase(item_id):
+    ItemToBuy = Item.query.filter_by(id=item_id).first()
+    form = PurchaseForm()
+    '''
+    This is the convention I follow when populating a SelectField with a singular entry.
+
+    form.itemToBuy.choices = [(ItemToBuy.id, f'{ItemToBuy.id}  ||   {ItemToBuy.name}')]
+                                ^^^                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            data to be used         format for form output
+
+    the data to be used is the 'ItemToBuy.id' since the the 'itemToBuy' form field is binded to
+    the associative table's (Purchase) 'item_id' field.
+    '''
+    form.itemToBuy.choices = [(ItemToBuy.id, f'{ItemToBuy.id}  ||   {ItemToBuy.name}')] #prepopulate
+    
+    #Lines 112-113 is an example of populating a SelectField with multiple entries.
+    users = User.query.all()
+    form.buyer.choices = [(user.id, f'{user.id}  ||   {user.name}') for user in users]
+    if form.validate_on_submit():
+        association = item_user_association.insert().values(
+            item_id=form.itemToBuy.data, #bind itemToBuy.id to item_id in Purchase table
+            user_id=form.buyer.data,
+            datePurchased=form.datePurchased.data)
+        db.session.execute(association)
+        db.session.commit()
+        flash('Success! Purchase has been created', category='success')
+            
+        #display recently added item on first tuple
+        query = request.args.get('query','')
+        results = Item.query.filter(Item.name.ilike(f"%{query}%")).all()
+        results = FormatItem(results)
+        results = [results[-1]] + results[:-1] #last index of the list becomes the first index
+        form = ElectronicsForm()
+        return render_template('index.html',items=results,query=query,form=form)
+    
+    CheckFormError(form)
+    return render_template('RegisterPurchase.html',form=form)
+
 
 @app.route("/login", methods=['GET','POST'])
 def login_page():
@@ -111,24 +146,13 @@ def login_page():
     return render_template('login.html',form=form)
 
 @app.route('/logout')
-@login_required
+#@login_required
 def logout_page():
     logout_user()
     flash("You have been logged out!", category='info')
     return redirect(url_for('index'))
 
-'''
-    Format the price with commas every three digits.
-    In the locale.format_string() function in Python, the grouping parameter specifies whether 
-    or not to include digit grouping separators in the formatted output. When grouping is set to True,
-    it enables digit grouping, which means that the formatted string will include commas to separate groups of 
-    digits according to the locale's grouping rules.
-
-
-    Inside the search() route, we loop through the results and use strftime('%B %d, %Y') to format the date_purchased attribute. 
-    %B represents the full month name (e.g., January, February, etc.), %d represents the day, and %Y represents the four-digit year.
-'''
-def FormError(form):
+def CheckFormError(form):
     if form.errors != {}:
         for err_msg in form.errors.values():
             flash(f'Error: {err_msg}', category='danger')

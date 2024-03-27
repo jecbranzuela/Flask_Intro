@@ -20,9 +20,7 @@ class UserForm(FlaskForm):
 class ItemForm(FlaskForm):
     name = StringField(label='Name:', validators=[Length(min=2,max=200), DataRequired()])
     price = IntegerField(label='Price:',validators=[DataRequired()])
-    #datePurchased = DateField(label='Date Purchased:', validators=[DataRequired()], default=datetime.today().date)
     description = StringField('Description')
-    #type = SelectField("Type:", choices=[('Electronic'),('Medicine'),('Food'),('Misc')],validators=[DataRequired()])
     type = StringField('Description')
     submit = SubmitField(label='Submit')
 
@@ -36,3 +34,9 @@ class ClothingForm(ItemForm):
 class FoodForm(ItemForm):
     brand = StringField('Brand', validators=[DataRequired()])
     isHalalCertified = BooleanField('Halal Certified')
+
+class PurchaseForm(FlaskForm):
+    itemToBuy = SelectField('Item',choices = [], validators=[DataRequired()])
+    buyer = SelectField(u'Buyer:', choices = [], validators=[DataRequired()])
+    datePurchased = DateField('Date Purchased: ', validators=[DataRequired()], default=datetime.today().date)
+    submit = SubmitField('Submit')
